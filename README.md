@@ -20,6 +20,49 @@ The data is simplified, but it behaves like a slice of a real hospital system: w
 
 Foreign keys link doctors to departments, appointments to patients and doctors, and billing to appointments. `billing.appointment_id` is unique so you cannot accidentally double-bill the same visit in this model.
 
+## Schema Diagram
+
+How the tables connect at a glance. One department has many doctors, patients and doctors each tie to many appointments, and each appointment has at most one billing row in this design.
+
+```mermaid
+erDiagram
+    departments {
+        int department_id PK
+        string department_name UK
+    }
+    doctors {
+        int doctor_id PK
+        int department_id FK
+        string doctor_name
+        string specialization
+    }
+    patients {
+        int patient_id PK
+        string patient_name
+        int age
+        string gender
+        string city
+    }
+    appointments {
+        int appointment_id PK
+        int patient_id FK
+        int doctor_id FK
+        date appointment_date
+        string status
+    }
+    billing {
+        int bill_id PK
+        int appointment_id FK
+        float total_amount
+        string payment_status
+        date payment_date
+    }
+    departments ||--o{ doctors : "employs"
+    patients ||--o{ appointments : "books"
+    doctors ||--o{ appointments : "sees"
+    appointments ||--|| billing : "billed_as"
+```
+
 ## SQL used in the queries
 
 - Inner joins across three and four tables  
@@ -52,7 +95,8 @@ Foreign keys link doctors to departments, appointments to patients and doctors, 
 schema.sql      -- drop (if present), create tables, constraints, indexes
 insert_data.sql -- sample rows
 queries.sql     -- analytics queries
-README.md       -- this file
+README.md       -- this file (includes the schema diagram)
+assets/         -- optional place for exported images or notes
 ```
 
 ## How to run it
