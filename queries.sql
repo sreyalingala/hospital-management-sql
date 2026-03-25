@@ -1,21 +1,17 @@
--- Hospital Patient & Appointment Analytics — example queries
--- Run after insert_data.sql (PostgreSQL)
+-- Example analytics queries (PostgreSQL). Run after insert_data.sql.
 
--- ---------------------------------------------------------------------------
--- 1) Total number of patients registered in the system
--- ---------------------------------------------------------------------------
+-- Counts
+-- ------------------------------------------------------------------
+
+-- How many patients are in the table?
 SELECT COUNT(*) AS total_patients
 FROM patients;
 
--- ---------------------------------------------------------------------------
--- 2) Total number of doctors on staff
--- ---------------------------------------------------------------------------
+-- How many doctors?
 SELECT COUNT(*) AS total_doctors
 FROM doctors;
 
--- ---------------------------------------------------------------------------
--- 3) Appointments per department (joins appointments → doctors → departments)
--- ---------------------------------------------------------------------------
+-- Volume by department (join appointments to doctors to departments)
 SELECT
     d.department_name,
     COUNT(a.appointment_id) AS appointment_count
@@ -25,9 +21,7 @@ INNER JOIN departments AS d ON doc.department_id = d.department_id
 GROUP BY d.department_id, d.department_name
 ORDER BY appointment_count DESC;
 
--- ---------------------------------------------------------------------------
--- 4) Busiest doctors — most appointments overall
--- ---------------------------------------------------------------------------
+-- Doctors with the most appointments
 SELECT
     doc.doctor_name,
     COUNT(a.appointment_id) AS appointment_count
@@ -36,9 +30,7 @@ INNER JOIN doctors AS doc ON a.doctor_id = doc.doctor_id
 GROUP BY doc.doctor_id, doc.doctor_name
 ORDER BY appointment_count DESC;
 
--- ---------------------------------------------------------------------------
--- 5) Patients with more than one visit (repeat visitors)
--- ---------------------------------------------------------------------------
+-- Patients who booked more than once
 SELECT
     p.patient_id,
     p.patient_name,
@@ -49,9 +41,7 @@ GROUP BY p.patient_id, p.patient_name
 HAVING COUNT(a.appointment_id) > 1
 ORDER BY visit_count DESC;
 
--- ---------------------------------------------------------------------------
--- 6) Cancelled appointment rate (as a percentage of all appointments)
--- ---------------------------------------------------------------------------
+-- Share of appointments that were cancelled
 SELECT
     ROUND(
         100.0 * SUM(CASE WHEN a.status = 'Cancelled' THEN 1 ELSE 0 END) / COUNT(*),
@@ -59,9 +49,10 @@ SELECT
     ) AS cancelled_rate_percent
 FROM appointments AS a;
 
--- ---------------------------------------------------------------------------
--- 7) Monthly revenue (paid bills only; uses appointment date for the month)
--- ---------------------------------------------------------------------------
+-- Revenue and billing
+-- ------------------------------------------------------------------
+
+-- Paid revenue by month (month comes from the appointment date)
 SELECT
     EXTRACT(YEAR FROM a.appointment_date) AS revenue_year,
     EXTRACT(MONTH FROM a.appointment_date) AS revenue_month,
@@ -74,9 +65,7 @@ GROUP BY
     EXTRACT(MONTH FROM a.appointment_date)
 ORDER BY revenue_year, revenue_month;
 
--- ---------------------------------------------------------------------------
--- 8) Unpaid bills — detail list
--- ---------------------------------------------------------------------------
+-- Unpaid bills, largest first
 SELECT
     b.bill_id,
     b.appointment_id,
@@ -89,15 +78,11 @@ INNER JOIN patients AS p ON a.patient_id = p.patient_id
 WHERE b.payment_status = 'Unpaid'
 ORDER BY b.total_amount DESC;
 
--- ---------------------------------------------------------------------------
--- 9) Average billing amount across all bills
--- ---------------------------------------------------------------------------
+-- Average bill amount
 SELECT ROUND(AVG(b.total_amount), 2) AS average_bill_amount
 FROM billing AS b;
 
--- ---------------------------------------------------------------------------
--- 10) Department with the highest revenue (paid bills only)
--- ---------------------------------------------------------------------------
+-- Department with the highest paid revenue
 WITH dept_revenue AS (
     SELECT
         d.department_name,
@@ -114,9 +99,7 @@ FROM dept_revenue
 ORDER BY total_revenue DESC
 LIMIT 1;
 
--- ---------------------------------------------------------------------------
--- 11) Doctor who saw the most unique patients
--- ---------------------------------------------------------------------------
+-- Doctor with the most distinct patients (completed visits only)
 SELECT
     doc.doctor_name,
     COUNT(DISTINCT a.patient_id) AS unique_patients
@@ -127,9 +110,7 @@ GROUP BY doc.doctor_id, doc.doctor_name
 ORDER BY unique_patients DESC
 LIMIT 1;
 
--- ---------------------------------------------------------------------------
--- 12) Top 5 most expensive bills
--- ---------------------------------------------------------------------------
+-- Five highest bills
 SELECT
     b.bill_id,
     b.appointment_id,
@@ -139,9 +120,10 @@ FROM billing AS b
 ORDER BY b.total_amount DESC
 LIMIT 5;
 
--- ---------------------------------------------------------------------------
--- 13) Appointments grouped by status
--- ---------------------------------------------------------------------------
+-- Status and geography
+-- ------------------------------------------------------------------
+
+-- Appointments by status
 SELECT
     a.status,
     COUNT(*) AS appointment_count
@@ -149,9 +131,7 @@ FROM appointments AS a
 GROUP BY a.status
 ORDER BY appointment_count DESC;
 
--- ---------------------------------------------------------------------------
--- 14) Patient count by city
--- ---------------------------------------------------------------------------
+-- Patients per city
 SELECT
     p.city,
     COUNT(*) AS patient_count
@@ -159,9 +139,7 @@ FROM patients AS p
 GROUP BY p.city
 ORDER BY patient_count DESC, p.city;
 
--- ---------------------------------------------------------------------------
--- 15) Recent appointments (last 10 by date, newest first)
--- ---------------------------------------------------------------------------
+-- Ten most recent appointments
 SELECT
     a.appointment_id,
     a.appointment_date,

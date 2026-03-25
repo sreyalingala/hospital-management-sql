@@ -1,5 +1,5 @@
--- Sample data for Hospital Patient & Appointment Analytics
--- Run after schema.sql (PostgreSQL)
+-- Sample rows for Hospital Patient and Appointment Analytics
+-- Run after schema.sql
 
 INSERT INTO departments (department_id, department_name) VALUES
     (1, 'Cardiology'),
